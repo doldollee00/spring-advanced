@@ -1,11 +1,12 @@
 package org.example.expert.domain.comment.service;
 
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
+import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
 import org.example.expert.domain.common.dto.AuthUser;
-import org.example.expert.domain.common.exception.ServerException;
+import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
@@ -16,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,7 +45,7 @@ class CommentServiceTest {
         given(todoRepository.findById(anyLong())).willReturn(Optional.empty());
 
         // when
-        ServerException exception = assertThrows(ServerException.class, () -> {
+        InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
             commentService.saveComment(authUser, todoId, request);
         });
 
@@ -70,4 +72,30 @@ class CommentServiceTest {
         // then
         assertNotNull(result);
     }
+
+    @Test
+    public void comment_목록_조회를_성공한다() {
+        // given
+        long todoId = 1;
+        CommentSaveRequest request = new CommentSaveRequest("contents");
+        AuthUser authUser = new AuthUser(1L, "email", UserRole.USER);
+        User user = User.fromAuthUser(authUser);
+        Todo todo = new Todo("title", "title", "contents", user);
+
+        Comment comment = new Comment(request.getContents(), user, todo);
+        List<Comment> commentList = List.of(comment);
+
+        given(commentRepository.findByTodoIdWithUser(anyLong())).willReturn(commentList);
+
+        // when
+        List<CommentResponse> commentResponses = commentService.getComments(todoId);
+
+        // then
+        assertEquals(1, commentResponses.size());
+        assertEquals(comment.getId(), commentResponses.get(0).getId());
+        assertEquals(comment.getContents(), commentResponses.get(0).getContents());
+        assertEquals(comment.getUser().getId(), commentResponses.get(0).getUser().getId());
+        assertEquals(comment.getUser().getEmail(), commentResponses.get(0).getUser().getEmail());
+    }
 }
+
