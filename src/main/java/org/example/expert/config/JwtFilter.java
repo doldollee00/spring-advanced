@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.expert.domain.user.enums.UserRole;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.PatternMatchUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
